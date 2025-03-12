@@ -1,15 +1,16 @@
 
-# Friendsbook Metro - Django API
+# 📌 Friendsbook Metro - Django API
 
 A Django-based API for user profiles, preferences, and authentication.
 
 ## 🚀 Features
 
-- JWT Authentication (Login, Logout, Token Refresh)
-- User Profile Management (CRUD Operations)
-- User Preferences (Height, Age, Weight, Education, Location)
-- CORS Support (For Frontend Integration)
-- Swagger API Documentation
+- **JWT Authentication** (Login, Logout, Token Refresh)
+- **User Profile Management** (CRUD Operations)
+- **User Preferences** (Height, Age, Weight, Education, Location)
+- **CORS Support** (For Frontend Integration)
+- **Swagger API Documentation**
+- **User Registration with Profile & Preferences**
 
 ## 🛠️ Setup Instructions
 
@@ -22,19 +23,17 @@ cd friendsbook-metro
 
 ### 2️⃣ Create & Activate Virtual Environment
 
-- For macOS/Linux:
+- **For macOS/Linux**:
+  ```bash
+  python3 -m venv env
+  source env/bin/activate
+  ```
 
-```bash
-python3 -m venv env
-source env/bin/activate
-```
-
-- For Windows (PowerShell):
-
-```bash
-python -m venv env
-env\Scriptsctivate
-```
+- **For Windows (PowerShell)**:
+  ```bash
+  python -m venv env
+  env\Scriptsctivate
+  ```
 
 ### 3️⃣ Install Dependencies
 
@@ -46,7 +45,7 @@ pip install -r requirements.txt
 
 Create a `.env` file in the root directory and add:
 
-```env
+```
 SECRET_KEY=your_secret_key
 DEBUG=True
 ALLOWED_HOSTS=*
@@ -73,10 +72,9 @@ Access API: `http://127.0.0.1:8000/`
 
 ### Obtain JWT Token
 
-- **POST** `/api/token/`
+**POST** `/api/token/`
 
-Request:
-
+#### Request:
 ```json
 {
     "username": "admin",
@@ -84,8 +82,7 @@ Request:
 }
 ```
 
-Response:
-
+#### Response:
 ```json
 {
     "access": "your_access_token",
@@ -95,12 +92,58 @@ Response:
 
 ### Refresh Token
 
-- **POST** `/api/token/refresh/`
+**POST** `/api/token/refresh/`
 
-Request:
-
+#### Request:
 ```json
 {
+    "refresh": "your_refresh_token"
+}
+```
+
+## 📝 User Registration with Profile & Preferences
+
+### Endpoint: `/api/auth/register/`
+
+This endpoint registers a user with their profile and preferences.
+
+#### Request Example:
+```json
+{
+    "username": "john_doe",
+    "email": "john.doe@example.com",
+    "password": "securepassword123",
+    "first_name": "John",
+    "last_name": "Doe",
+    "created_by": "self",
+    "gender": "male",
+    "name": "John Doe",
+    "date_of_birth": "1990-01-01",
+    "height": 175.5,
+    "age": 30,
+    "weight": 75.5,
+    "education": "Bachelor's",
+    "country": "USA",
+    "address": "123 Street, NY",
+    "phone_number": "+123456789",
+    "hide_phone_number": true,
+    "language": "English",
+    "religion": "Christianity",
+    "preferred_height_min": 160,
+    "preferred_height_max": 180,
+    "preferred_age_min": 25,
+    "preferred_age_max": 35,
+    "preferred_weight_min": 60,
+    "preferred_weight_max": 80,
+    "preferred_education": "Bachelor's",
+    "preferred_location": "USA"
+}
+```
+
+#### Response Example:
+```json
+{
+    "access": "your_access_token",
     "refresh": "your_refresh_token"
 }
 ```
@@ -109,21 +152,18 @@ Request:
 
 ### User Profile Endpoints
 
-| Method | Endpoint               | Description                |
-|--------|------------------------|----------------------------|
-| GET    | `/api/profiles/`        | List all user profiles     |
-| POST   | `/api/profiles/`        | Create a new profile       |
-| GET    | `/api/profiles/{id}/`   | Retrieve a profile         |
-| PUT    | `/api/profiles/{id}/`   | Update a profile           |
-| DELETE | `/api/profiles/{id}/`   | Delete a profile           |
+| Method | Endpoint           | Description              |
+|--------|--------------------|--------------------------|
+| GET    | /api/profiles/      | List all user profiles   |
+| POST   | /api/profiles/      | Create a new profile     |
+| GET    | /api/profiles/{id}/ | Retrieve a profile       |
+| PUT    | /api/profiles/{id}/ | Update a profile         |
+| DELETE | /api/profiles/{id}/ | Delete a profile         |
 
-### Example: Create Profile
+#### Example: Create Profile
+**POST** `/api/profiles/`
 
-- **POST** `/api/profiles/`
-- Authorization: Bearer `your_access_token`
-
-Request:
-
+##### Request:
 ```json
 {
     "name": "John Doe",
@@ -141,8 +181,7 @@ Request:
 }
 ```
 
-Response:
-
+##### Response:
 ```json
 {
     "id": 1,
@@ -192,29 +231,27 @@ pip install drf-yasg
 
 ### Access API Docs
 
-| Type        | URL                                    |
-|-------------|----------------------------------------|
-| Swagger UI  | `http://127.0.0.1:8000/swagger/`       |
-| ReDoc       | `http://127.0.0.1:8000/redoc/`         |
+| Type          | URL                        |
+|---------------|----------------------------|
+| Swagger UI    | `http://127.0.0.1:8000/swagger/` |
+| ReDoc         | `http://127.0.0.1:8000/redoc/`  |
 
 ## ⚠️ Troubleshooting
 
-- **Error: Application Labels Aren't Unique (corsheaders)**
+### Error: Application Labels Aren't Unique (corsheaders)
 
-  Open `settings.py` and remove the duplicate `corsheaders` entry from `INSTALLED_APPS`.
+- Open `settings.py` and remove the duplicate `corsheaders` entry from `INSTALLED_APPS`.
 
-- **Error: Database Not Found**
+### Error: Database Not Found
 
-  Ensure PostgreSQL is running and credentials in `.env` are correct.
+- Ensure PostgreSQL is running and credentials in `.env` are correct.
 
-- **Error: Migrations Not Applied**
+### Error: Migrations Not Applied
 
-  Run:
-
-  ```bash
-  python manage.py makemigrations
-  python manage.py migrate
-  ```
+```bash
+python manage.py makemigrations
+python manage.py migrate
+```
 
 ## 📝 License
 
