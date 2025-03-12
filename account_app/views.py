@@ -14,20 +14,25 @@ from rest_framework.permissions import AllowAny
 @permission_classes([AllowAny])
 def user_registration(request):
     if request.method == 'POST':
+        # Deserialize data using the registration serializer
         serializer = UserProfileRegistrationSerializer(data=request.data)
+        
+        # If the serializer is valid, save the user, profile, and preference
         if serializer.is_valid():
-            user = serializer.save()
-
-            # Generate JWT tokens
+            user = serializer.save()  # This will create the profile and preference
+            
+            # Generate JWT tokens for the user
             refresh = RefreshToken.for_user(user)
             access_token = str(refresh.access_token)
             refresh_token = str(refresh)
-
+            
+            # Return the tokens in the response
             return Response({
                 'access': access_token,
                 'refresh': refresh_token
             }, status=status.HTTP_201_CREATED)
 
+        # If serializer is invalid, return errors
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # ✅ GET all profiles & POST a new one

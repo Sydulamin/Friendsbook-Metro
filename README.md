@@ -138,6 +138,7 @@ This endpoint registers a user with their profile and preferences.
     "preferred_education": "Bachelor's",
     "preferred_location": "USA"
 }
+
 ```
 
 #### Response Example:

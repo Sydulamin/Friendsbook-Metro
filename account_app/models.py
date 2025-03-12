@@ -32,7 +32,7 @@ class UserProfile(BaseModel):
     name          = models.CharField(max_length=255)
     date_of_birth = models.DateField()
     email         = models.EmailField(unique=True)
-    height        = models.DecimalField(max_digits=5, decimal_places=2, help_text="Height in cm")  # e.g., 175.5 cm
+    height        = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)  # make nullable  # e.g., 175.5 cm
     age           = models.PositiveIntegerField()
     weight        = models.DecimalField(max_digits=5, decimal_places=2, help_text="Weight in kg")
     education     = models.CharField(max_length=255)
@@ -50,6 +50,7 @@ class UserPreference(BaseModel):
     """Model for storing user’s preferred partner criteria."""
 
     user                 = models.OneToOneField(User, on_delete=models.CASCADE, related_name="preferences")
+    email                = models.EmailField(null=True, blank=True)
     preferred_height_min = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     preferred_height_max = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     preferred_age_min    = models.PositiveIntegerField(null=True, blank=True)
