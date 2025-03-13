@@ -68,6 +68,25 @@ CORS_ALLOWED_ORIGINS = [
 
 MIDDLEWARE.insert(1, 'corsheaders.middleware.CorsMiddleware')
 
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    # Increase Access Token Lifetime
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=7),  # Example: 7 days
+
+    # Increase Refresh Token Lifetime
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=30),  # Example: 30 days
+
+    # Optional: Extend token lifetime on refresh
+    # "ROTATE_REFRESH_TOKENS": True,
+    # "BLACKLIST_AFTER_ROTATION": True,
+
+    # # Other default settings
+    # "AUTH_HEADER_TYPES": ("Bearer",),
+    # "USER_ID_FIELD": "id",
+    # "USER_ID_CLAIM": "user_id",
+}
+
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -144,6 +163,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
 
 # This production code might break development mode, so we check whether we're in DEBUG mode
 if not DEBUG:

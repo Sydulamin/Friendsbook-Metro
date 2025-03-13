@@ -4,10 +4,23 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import UserProfile, UserPreference
-from .serializers import UserProfileSerializer, UserPreferenceSerializer, UserProfileRegistrationSerializer
+from .serializers import UserProfileSerializer, UserPreferenceSerializer, UserProfileRegistrationSerializer, Explore_UserSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+from .serializers import LoginSerializer
+from django.contrib.auth.models import User
+
+@swagger_auto_schema(method="post", request_body=LoginSerializer)
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def user_login(request):
+    serializer = LoginSerializer(data=request.data)
+    if serializer.is_valid():
+        return Response(serializer.validated_data, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 # User Registration (POST)
 @swagger_auto_schema(
@@ -134,3 +147,13 @@ def user_preferences(request):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@swagger_auto_schema(method="get", responses={200: Explore_UserSerializer(many=True)})
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def explore_other_users(request):
+    """Returns a list of all users (including full profile) except the logged-in user."""
+    users = User.objects.exclude(id=request.user.id).exclude(is_superuser=True)
+    serializer = Explore_UserSerializer(users, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)

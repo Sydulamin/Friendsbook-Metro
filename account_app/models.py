@@ -27,21 +27,22 @@ class UserProfile(BaseModel):
     """Model for storing user profile information."""
 
     user          = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
+    profile_pic   = models.ImageField(upload_to="profile_pics/",default= 'def.png', null=True, blank=True)
     created_by    = models.CharField(max_length=10, choices=profile_created_by_choices())
     gender        = models.CharField(max_length=6, choices=gender_choices())
-    name          = models.CharField(max_length=255)
+    name          = models.CharField(max_length=255, null=True, blank=True)
     date_of_birth = models.DateField()
     email         = models.EmailField(unique=True)
-    height        = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)  # make nullable  # e.g., 175.5 cm
-    age           = models.PositiveIntegerField()
-    weight        = models.DecimalField(max_digits=5, decimal_places=2, help_text="Weight in kg")
-    education     = models.CharField(max_length=255)
-    country       = models.CharField(max_length=100)
-    address       = models.TextField()
-    phone_number  = models.CharField(max_length=20, unique=True)
+    height        = models.DecimalField(max_digits=5, decimal_places=2)  # make nullable  # e.g., 175.5 cm
+    age           = models.PositiveIntegerField(null=True, blank=True)
+    weight        = models.DecimalField(max_digits=5, decimal_places=2, help_text="Weight in kg", null=True, blank=True)
+    education     = models.CharField(max_length=255, null=True, blank=True)
+    country       = models.CharField(max_length=100, null=True, blank=True)
+    address       = models.TextField(null=True, blank=True)
+    phone_number  = models.CharField(max_length=20, unique=True, null=True, blank=True)
     hide_phone_number = models.BooleanField(default=True)
-    language      = models.CharField(max_length=100)
-    religion      = models.CharField(max_length=100)
+    language      = models.CharField(max_length=100, null=True, blank=True)
+    religion      = models.CharField(max_length=100, null=True, blank=True)
 
     def __str__(self):
         return self.name
