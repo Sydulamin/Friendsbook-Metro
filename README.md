@@ -201,6 +201,78 @@ This endpoint registers a user with their profile and preferences.
 }
 ```
 
+## 🔍 Matching Endpoints
+
+### Find Matches
+
+**Method:** POST  
+**Endpoint:** `/api/matching/`  
+**Description:** Find matches based on preferences
+
+#### Example: Find Matches
+
+**Request:**
+```json
+{
+    "latitude": 12.9716,
+    "longitude": 77.5946
+}
+```
+
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "user": {
+      "id": 1,
+      "username": "user1"
+    },
+    "profile_pic": "https://example.com/profile_pics/user1.jpg",
+    "created_by": "self",
+    "gender": "male",
+    "name": "John Doe",
+    "date_of_birth": "1990-01-01",
+    "email": "john.doe@example.com",
+    "height": 175.5,
+    "age": 35,
+    "weight": 70.0,
+    "education": "Bachelor's",
+    "country": "USA",
+    "address": "123 Main St, Springfield, USA",
+    "phone_number": "+1234567890",
+    "language": "English",
+    "religion": "Christianity",
+    "latitude": 12.9716,
+    "longitude": 77.5946,
+    "distance": 5.34
+  }
+]
+```
+
+### Start Matching
+
+**Method:** POST  
+**Endpoint:** `/start_matching/`  
+**Description:** Start matching users based on location
+
+#### Example: Start Matching
+
+**Request:**
+```json
+{
+    "latitude": 12.9716,
+    "longitude": 77.5946
+}
+```
+
+**Response:**
+```json
+{
+    "message": "Matching process started successfully."
+}
+```
+
 ## 🛠️ Development & Debugging
 
 ### Run Tests

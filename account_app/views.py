@@ -10,6 +10,7 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from .serializers import LoginSerializer
 from django.contrib.auth.models import User
+from math import radians, sin, cos, sqrt, atan2
 
 @swagger_auto_schema(method="post", request_body=LoginSerializer)
 @api_view(["POST"])
@@ -21,8 +22,76 @@ def user_login(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+def calculate_distance(lat1, lon1, lat2, lon2):
+    R = 6371.0
+    
+    lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
+    
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+    
+    a = sin(dlat / 2)**2 + cos(lat1) * cos(lat2) * sin(dlon / 2)**2
+    c = 2 * atan2(sqrt(a), sqrt(1 - a))
+    
+    distance = R * c
+    return distance
 
-# User Registration (POST)
+@swagger_auto_schema(
+    method='post', 
+    request_body=Explore_UserSerializer, 
+    responses={201: openapi.Response('User created', Explore_UserSerializer)}
+)
+@api_view(['POST'])
+def find_matches(request):
+    user_profile = request.user.userprofile
+    
+    max_distance = float(request.GET.get("radius", 50))
+
+    # Get all other user profiles
+    users = UserProfile.objects.exclude(user=request.user) 
+    matched_users = []
+
+    for u in users:
+        if u.latitude and u.longitude:
+            distance = calculate_distance(user_profile.latitude, user_profile.longitude, u.latitude, u.longitude)
+            
+            if distance <= max_distance:
+                matched_users.append(u)
+    
+    serializer = UserProfileSerializer(matched_users, many=True)
+    return Response(serializer.data)
+
+
+@swagger_auto_schema(
+    method='post', 
+    request_body=Explore_UserSerializer, 
+    responses={201: openapi.Response('User created', Explore_UserSerializer)}
+)
+@api_view(['POST'])
+def start_matching(request):
+    # Extract latitude and longitude from the request data
+    latitude = request.data.get('latitude')
+    longitude = request.data.get('longitude')
+
+    if not latitude or not longitude:
+        return Response({"error": "Latitude and Longitude are required."}, status=400)
+
+    # Create a reference location (tuple of latitude and longitude)
+    reference_location = (latitude, longitude)
+
+    # Get all users to check distance (you can filter based on other criteria if needed)
+    users = User.objects.all()
+
+    # Create a list of serialized users with distance info
+    serializer = Explore_UserSerializer(users, many=True, context={'reference_location': reference_location})
+    
+    # Filter the users by distance (e.g., users within 10km radius)
+    matched_users = [user for user in serializer.data if user.get('distance') <= 10]  # 10km radius
+    
+    return Response(matched_users)
+
+
+
 @swagger_auto_schema(
     method='post', 
     request_body=UserProfileRegistrationSerializer, 
@@ -32,14 +101,11 @@ def user_login(request):
 @permission_classes([AllowAny])
 def user_registration(request):
     if request.method == 'POST':
-        # Deserialize data using the registration serializer
         serializer = UserProfileRegistrationSerializer(data=request.data)
         
-        # If the serializer is valid, save the user, profile, and preference
         if serializer.is_valid():
-            user = serializer.save()  # This will create the profile and preference
+            user = serializer.save() 
             
-            # Generate JWT tokens for the user
             refresh = RefreshToken.for_user(user)
             access_token = str(refresh.access_token)
             refresh_token = str(refresh)

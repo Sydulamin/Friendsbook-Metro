@@ -3,6 +3,7 @@ from rest_framework import serializers
 from .models import UserProfile, UserPreference
 from django.contrib.auth.models import User
 
+from geopy.distance import geodesic
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
@@ -129,10 +130,10 @@ class LoginSerializer(serializers.Serializer):
 # <------------------------------------- Explore Area ------------------------------------->
 class Explore_UserSerializer(serializers.ModelSerializer):
     userprofile = serializers.SerializerMethodField()  # Get full user profile data
-
+    distance = serializers.SerializerMethodField()
     class Meta:
         model = User
-        fields = ["username", "userprofile"]  # Include full UserProfile inside
+        fields = ["username", "userprofile", "distance"]  # Include full UserProfile inside
 
     def get_userprofile(self, obj):
         """Fetch all user profile data dynamically."""
@@ -150,3 +151,18 @@ class Explore_UserSerializer(serializers.ModelSerializer):
             "zip_code": user_profile.zip_code,
             "created_at": user_profile.created_at,
         }
+        
+    def get_distance(self, obj):
+        """Calculate the distance between the user's location and a dynamic reference point."""
+        # Get the reference location from request data
+        reference_location = self.context.get('reference_location', None)
+        
+        if reference_location:
+            latitude, longitude = reference_location
+            user_profile = UserProfile.objects.get(user=obj)
+            user_location = (user_profile.latitude, user_profile.longitude)
+            
+            if user_profile.latitude and user_profile.longitude:
+                distance = geodesic(user_location, (latitude, longitude)).km  # Distance in kilometers
+                return round(distance, 2)  # Return distance rounded to 2 decimal places
+        return None
