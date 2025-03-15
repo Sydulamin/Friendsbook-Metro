@@ -65,3 +65,13 @@ class UserPreference(BaseModel):
 
     def __str__(self):
         return f"{self.user.username}'s Preferences"
+
+
+class MatchHistory(models.Model):
+    user = models.ForeignKey(User, related_name='matches', on_delete=models.CASCADE)
+    matched_user = models.ForeignKey(User, related_name='matched_with', on_delete=models.CASCADE)
+    match_percentage = models.FloatField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} matched with {self.matched_user.username} ({self.match_percentage}%)"

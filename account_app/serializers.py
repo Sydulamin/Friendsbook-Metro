@@ -166,3 +166,35 @@ class Explore_UserSerializer(serializers.ModelSerializer):
                 distance = geodesic(user_location, (latitude, longitude)).km  # Distance in kilometers
                 return round(distance, 2)  # Return distance rounded to 2 decimal places
         return None
+    
+class LastJoinedUserSerializer(serializers.ModelSerializer):
+    user_profile = UserProfileSerializer(read_only=True)
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'user_profile']
+
+def get_last_joined_user():
+    """Fetch the last joined user and serialize the data."""
+    last_joined_user = User.objects.latest('date_joined')  # Fetch the most recent user based on date_joined
+    return LastJoinedUserSerializer(last_joined_user).data
+
+class PreferredEducationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserPreference
+        fields = ['preferred_education']
+
+    def update(self, instance, validated_data):
+        instance.preferred_education = validated_data.get('preferred_education', instance.preferred_education)
+        instance.save()
+        return instance
+    
+class PreferredLocationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserPreference
+        fields = ['preferred_location']
+
+    def update(self, instance, validated_data):
+        instance.preferred_location = validated_data.get('preferred_location', instance.preferred_location)
+        instance.save()
+        return instance

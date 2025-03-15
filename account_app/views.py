@@ -3,14 +3,17 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .models import UserProfile, UserPreference
-from .serializers import UserProfileSerializer, UserPreferenceSerializer, UserProfileRegistrationSerializer, Explore_UserSerializer
+from .models import MatchHistory, UserProfile, UserPreference
+from .serializers import UserProfileSerializer, UserPreferenceSerializer, LastJoinedUserSerializer, UserProfileRegistrationSerializer, Explore_UserSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from .serializers import LoginSerializer
 from django.contrib.auth.models import User
 from math import radians, sin, cos, sqrt, atan2
+from .serializers import get_last_joined_user
+from geopy.distance import geodesic
+
 
 @swagger_auto_schema(method="post", request_body=LoginSerializer)
 @api_view(["POST"])
@@ -223,3 +226,170 @@ def explore_other_users(request):
     users = User.objects.exclude(id=request.user.id).exclude(is_superuser=True)
     serializer = Explore_UserSerializer(users, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@swagger_auto_schema(
+    method='get', 
+    responses={200: LastJoinedUserSerializer},
+    operation_description="Retrieve a single user profile"
+)
+@api_view(['GET'])
+def last_joined_user_view(request):
+    """Function-based view to get the last joined user."""
+    try:
+        # Fetch and return the last joined user data
+        last_user_data = get_last_joined_user()
+        return Response(last_user_data, status=status.HTTP_200_OK)
+    except User.DoesNotExist:
+        return Response({"detail": "No users found."}, status=status.HTTP_404_NOT_FOUND)
+    
+    
+
+def calculate_match_percentage(user_profile, other_user_profile, user_preferences):
+    match_score = 0
+    total_score = 0
+
+    # Compare Age
+    if user_preferences.preferred_age_min and user_preferences.preferred_age_max:
+        if user_preferences.preferred_age_min <= other_user_profile.age <= user_preferences.preferred_age_max:
+            match_score += 1
+        total_score += 1
+
+    # Compare Height
+    if user_preferences.preferred_height_min and user_preferences.preferred_height_max:
+        if user_preferences.preferred_height_min <= other_user_profile.height <= user_preferences.preferred_height_max:
+            match_score += 1
+        total_score += 1
+
+    # Compare Weight
+    if user_preferences.preferred_weight_min and user_preferences.preferred_weight_max:
+        if user_preferences.preferred_weight_min <= other_user_profile.weight <= user_preferences.preferred_weight_max:
+            match_score += 1
+        total_score += 1
+
+    # Compare Location (you can calculate distance if latitude/longitude is set)
+    if user_profile.latitude and user_profile.longitude and other_user_profile.latitude and other_user_profile.longitude:
+        distance = geodesic(
+            (user_profile.latitude, user_profile.longitude),
+            (other_user_profile.latitude, other_user_profile.longitude)
+        ).km
+        if distance <= 50:  # 50 km as a threshold for matching location
+            match_score += 1
+        total_score += 1
+
+    # Normalize and calculate match percentage
+    if total_score > 0:
+        match_percentage = (match_score / total_score) * 100
+    else:
+        match_percentage = 0
+
+    return match_percentage
+
+
+@api_view(['GET'])
+def find_matches_allDetails(request):
+    """
+    Find matches for the logged-in user by comparing their profile and preferences with other users.
+    """
+    user = request.user
+    user_profile = UserProfile.objects.get(user=user)
+    user_preferences = UserPreference.objects.get(user=user)
+
+    # Get all other users' profiles
+    other_users_profiles = UserProfile.objects.exclude(user=user)
+
+    matches = []
+
+    # Compare each user to the logged-in user
+    for other_user_profile in other_users_profiles:
+        match_percentage = calculate_match_percentage(user_profile, other_user_profile, user_preferences)
+
+        # If match is above a certain threshold, add to matches
+        if match_percentage > 0:  # You can define a minimum match percentage if needed
+            matches.append({
+                "user_id": other_user_profile.user.id,
+                "username": other_user_profile.user.username,
+                "match_percentage": match_percentage,
+                "profile_pic": other_user_profile.profile_pic.url if other_user_profile.profile_pic else None,
+            })
+
+    # Return the list of matches
+    return Response({"matches": matches})
+
+
+from .serializers import PreferredEducationSerializer, PreferredLocationSerializer
+
+
+@swagger_auto_schema(
+    method='PUT', 
+    responses={200: PreferredEducationSerializer},
+    operation_description="Retrieve a single user profile"
+)
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def update_preferred_education(request):
+    try:
+        user_preference = UserPreference.objects.get(user=request.user)
+    except UserPreference.DoesNotExist:
+        return Response({"detail": "User preferences not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = PreferredEducationSerializer(user_preference, data=request.data, partial=True)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@swagger_auto_schema(
+    method='PUT', 
+    responses={200: PreferredLocationSerializer},
+    operation_description="Retrieve a single user profile"
+)
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def update_preferred_location(request):
+    try:
+        user_preference = UserPreference.objects.get(user=request.user)
+    except UserPreference.DoesNotExist:
+        return Response({"detail": "User preferences not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = PreferredLocationSerializer(user_preference, data=request.data, partial=True)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def logout(request):
+    try:
+        # Revoke refresh token to ensure it's no longer valid
+        refresh_token = request.data.get('refresh_token')
+        if not refresh_token:
+            return Response({"detail": "Refresh token is required"}, status=400)
+
+        token = RefreshToken(refresh_token)
+        token.blacklist()  # This will blacklist the token (assuming the blacklist app is enabled)
+
+        return Response({"detail": "Successfully logged out"}, status=200)
+    except Exception as e:
+        return Response({"detail": f"Error logging out: {str(e)}"}, status=400)
+    
+
+@api_view(['GET'])
+@permission_classes(IsAuthenticated)
+def get_matches_history(request):
+    # Get the logged-in user's matches history
+    matches = MatchHistory.objects.filter(user=request.user).select_related('matched_user')
+
+    match_history = []
+    for match in matches:
+        matched_user_profile = UserProfile.objects.get(user=match.matched_user)
+        match_history.append({
+            "matched_user": match.matched_user.username,
+            "match_percentage": match.match_percentage,
+            "profile_picture": matched_user_profile.profile_picture.url if matched_user_profile.profile_picture else None,
+            "created_at": match.created_at
+        })
+
+    return Response(match_history, status=status.HTTP_200_OK)

@@ -250,6 +250,31 @@ This endpoint registers a user with their profile and preferences.
 ]
 ```
 
+## Update Preferred Education
+
+**Method:** PUT  
+**Endpoint:** `/update_preferred_education/`
+
+#### Request Body:
+```json
+{
+  "preferred_education": "Master's Degree"
+}
+```
+
+## Update Preferred Location
+
+**Method:** PUT  
+**Endpoint:** `/update_preferred_location/`
+
+#### Request Body:
+```json
+{
+  "preferred_location": "Canada"
+}
+```
+
+
 ### Start Matching
 
 **Method:** POST  
